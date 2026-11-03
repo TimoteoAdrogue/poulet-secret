@@ -9,7 +9,7 @@ word for word, from their site, their TV menu PDF and their opening-hours story 
   writes `docs/index.html` (it inlines the 100 KB traced logo path from `tools/chicken-path.d`).
 - `docs/assets/main.js`: hero dive through the logo, the 7-step burger build, menu tabs and "Menu" prices, live opening status.
   `ORDER_URL` at the top re-enables every "Commander" button once the client gives a working ordering link.
-- `tools/silhouette.py` + potrace made the logo vector; `tools/pole.py` finds the point the hero zooms through.
+- `tools/solid.py` + potrace turn the logo into the clean silhouette (lettering filled in); `tools/pole.py` finds the point the hero zooms through.
 - Checks: `node tools/func.mjs <url>` (nav, deep links, rail, tabs, toggle, reveals, reduced motion),
   `node tools/copycheck.mjs <url>` (visible text vs `source/SOURCE.md`), `node tools/perf.mjs <url> 0 1.4` (frame times),
   `python3 tools/ff_check.py <dir>` (Firefox).
