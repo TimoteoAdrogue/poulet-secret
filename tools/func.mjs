@@ -32,6 +32,9 @@ ok(await p.evaluate(() => document.querySelector('#c-legends i').textContent.sta
 ok(await p.evaluate(() => document.querySelector('#c-kids i .v').textContent === 'CHF 13.00'), 'kids have no menu supplement');
 ok(await p.evaluate(() => { const t = document.querySelector('#t-legends'), r = document.querySelector('.tab-pill').getBoundingClientRect(), b = t.getBoundingClientRect(); return Math.abs(r.left - b.left) < 2 && Math.abs(r.width - b.width) < 2; }), 'tab pill sits under the selected tab');
 ok(await p.evaluate(() => getComputedStyle(document.querySelector('.panels')).height !== '0px' && !document.querySelector('.panels').getAnimations().length), 'panel height settles');
+// switching to a short tab must not leave the story pin stale (it used to engage 337 px late and snap)
+await p.click('#t-desserts'); await p.waitForTimeout(1000);
+ok(await p.evaluate(() => { const t = ScrollTrigger.getAll().find(t => t.pin && t.trigger.classList.contains('story-pin')); return Math.abs(t.start - (t.pin.parentElement.getBoundingClientRect().top + scrollY)) < 2; }), 'story pin still lines up after a tab switch');
 // jump straight to the bottom: one-shot reveals must still fire
 await p.evaluate(() => window.lenis.scrollTo(document.documentElement.scrollHeight, { immediate: true, force: true })); await p.waitForTimeout(900);
 ok(await p.evaluate(() => [...document.querySelectorAll('.star')].every(s => s.classList.contains('is-in'))), 'star icons drawn after a jump to the bottom');

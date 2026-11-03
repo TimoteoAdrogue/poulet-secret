@@ -14,5 +14,10 @@ word for word, from their site, their TV menu PDF and their opening-hours story 
   `node tools/copycheck.mjs <url>` (visible text vs `source/SOURCE.md`), `node tools/perf.mjs <url> 0 1.4` (frame times),
   `python3 tools/ff_check.py <dir>` (Firefox).
 
-Photos: the client's own (from pouletsecret.ch). Font: Mona Sans (GitHub, SIL OFL). Motion: GSAP 3.12.5, ScrollTrigger, Lenis 1.1.
+Photos: the client's own (from pouletsecret.ch), plus two free photos under the Unsplash License, used as stand-ins
+until the client's own shots arrive:
+- hero fried chicken and the crust texture: https://unsplash.com/photos/UgckYUoc0tM (@numpanglewat)
+- brioche texture of the drawn buns: https://unsplash.com/photos/aBYnzw50vY0 (@mandimelanie)
+The cheddar, bacon and pickle textures and the final burger are the client's Cheesy Bacon photo, cut out with Apple Vision
+(`swift tools/cutout.swift in.jpg out.png`). Font: Mona Sans (GitHub, SIL OFL). Motion: GSAP 3.12.5, ScrollTrigger, Lenis 1.1.
 No AI imagery.

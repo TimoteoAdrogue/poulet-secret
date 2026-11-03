@@ -68,6 +68,7 @@
       swapping = [panels.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 420, easing: ease }),
         ...$$('.bar-title, li, .note, .plus', to).map((el, i) => el.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }],
           { duration: 460, delay: i * 32, easing: ease, fill: 'backwards' }))];
+      swapping[0].onfinish = () => window.ScrollTrigger && ScrollTrigger.refresh();
     };
   }
   tabs.forEach((t, i) => {
@@ -78,8 +79,19 @@
     });
   });
   placePill(tabs[0]);
+  // on wide screens the board keeps the height of its tallest tab, so switching tabs never moves the page below
+  // (a moved page leaves every scroll trigger after it stale: the story pin then engages late and snaps)
+  function sizePanels() {
+    panels.style.minHeight = '';
+    if (innerWidth < 900) return;
+    const all = $$('.panel', panels), shown = all.find(p => !p.hidden);
+    const max = Math.max(...all.map(p => { all.forEach(q => q.hidden = q !== p); return panels.offsetHeight; }));
+    all.forEach(q => q.hidden = q !== shown);
+    panels.style.minHeight = max + 'px';
+  }
+  sizePanels();
   addEventListener('resize', () => placePill(tabs.find(b => b.getAttribute('aria-selected') === 'true')));
-  document.fonts && document.fonts.ready.then(() => placePill(tabs.find(b => b.getAttribute('aria-selected') === 'true')));
+  document.fonts && document.fonts.ready.then(() => { sizePanels(); placePill(tabs.find(b => b.getAttribute('aria-selected') === 'true')); window.ScrollTrigger && ScrollTrigger.refresh(); });
 
   // prices count to their "en menu" value instead of jumping
   const toggle = $('[data-menu-toggle]');
@@ -146,27 +158,45 @@
   }
   const dome = x => 416 - 154 * Math.pow(Math.max(0, 1 - Math.pow((x - 300) / 196, 2)), .62);
 
-  function layer(svg, cls, d, fill, extra) {
+  // each layer: a real food texture clipped to the drawn shape, shaded for volume, then the red ink line on top
+  function layer(svg, cls, d, fill, extra, tint) {
     const g = el('g', { class: 'L ' + cls }, svg);
-    if (fill) el('path', { class: 'fill', d, fill, transform: 'translate(5 4)' }, g);
+    el('path', { class: 'fill', d, fill }, g);
+    if (tint) el('path', { class: 'fill', d, fill: tint }, g);
+    el('path', { class: 'fill', d, fill: 'url(#shade)' }, g);
     el('path', { class: 'ink', d, pathLength: 1 }, g);
     if (extra) el('path', { class: 'ink', d: extra, pathLength: 1 }, g);
     return g;
   }
+  function textures(svg) {
+    const defs = el('defs', {}, svg);
+    const grad = (id, stops) => { const g = el('linearGradient', { id, x1: 0, y1: 0, x2: 0, y2: 1 }, defs); stops.forEach(([o, c, a]) => el('stop', { offset: o, 'stop-color': c, 'stop-opacity': a }, g)); };
+    grad('shade', [[0, '#fff', .32], [.35, '#fff', 0], [.7, '#000', 0], [1, '#000', .34]]);
+    grad('sauce', [[0, '#FFC27A', 1], [1, '#E2702A', 1]]);
+    // textures: brioche and crust from Unsplash (README credits); cheddar, bacon and pickle from the client's own Cheesy Bacon
+    [['bunT', 'bun-top', 96, 255, 408, 180], ['bunB', 'bun-top', 112, 505, 376, 82], ['chk', 'chicken', 80, 430, 440, 96],
+     ['baconA', 'bacon', 112, 404, 200, 56], ['baconB', 'bacon', 288, 400, 200, 56], ['pickle', 'pickle', 115, 410, 74, 20],
+     ['cheese', 'cheese', 118, 250, 364, 190], ['bits', 'bits', 150, 258, 300, 90]].forEach(([id, f, x, y, w, h]) => {
+      const pt = el('pattern', { id: 'tx-' + id, patternUnits: 'userSpaceOnUse', x, y, width: w, height: h }, defs);
+      el('image', { href: `assets/img/tx-${f}.webp`, width: w, height: h, preserveAspectRatio: 'xMidYMid slice' }, pt);
+    });
+  }
 
   function drawBurger(svg) {
     const L = {};
-    L.bunB = layer(svg, 'bunB', 'M118 522C118 514 126 512 134 512L466 512C474 512 482 514 482 522L478 546C472 572 448 580 420 580L180 580C152 580 128 572 122 546Z', '#F2BE72', 'M136 524L464 524');
+    textures(svg);
+    el('ellipse', { class: 'contact', cx: 300, cy: 584, rx: 196, ry: 10 }, svg);
+    L.bunB = layer(svg, 'bunB', 'M118 522C118 514 126 512 134 512L466 512C474 512 482 514 482 522L478 546C472 572 448 580 420 580L180 580C152 580 128 572 122 546Z', 'url(#tx-bunB)', 'M136 524L464 524', 'rgba(255,238,210,.38)');
     // the fillet: smooth when raw, craggy once fried
     L.raw = el('g', { class: 'L raw' }, svg);
-    el('path', { class: 'fill', d: blob(300, 478, 198, 30, 24, .03), fill: '#F8D9C8', transform: 'translate(5 4)' }, L.raw);
+    el('path', { class: 'fill', d: blob(300, 478, 198, 30, 24, .03), fill: '#F6D5C6' }, L.raw);
     el('path', { class: 'ink', d: blob(300, 478, 198, 30, 24, .03), pathLength: 1, 'stroke-dasharray': '.012 .01' }, L.raw);
     let crumbs = '';
     for (let i = 0; i < 46; i++) {
       const x = 130 + rnd() * 340, y = 462 + rnd() * 34, s = 4 + rnd() * 6;
       crumbs += `M${f1(x)} ${f1(y)}q${f1(s / 2)} ${f1(-s / 2)} ${f1(s)} 0`;
     }
-    L.chk = layer(svg, 'chk', blob(300, 478, 214, 36, 58, .1), '#E4A04C', crumbs);
+    L.chk = layer(svg, 'chk', blob(300, 478, 214, 36, 58, .1), 'url(#tx-chk)', crumbs);
     L.oil = el('g', { class: 'L oil' }, svg);
     el('rect', { class: 'oil-body', x: 24, y: 470, width: 552, height: 170 }, L.oil);
     const wave = (y, a, ph) => { let d = `M28 ${y}`; for (let x = 28; x <= 572; x += 12) d += `L${x} ${f1(y + Math.sin(x / 26 + ph) * a)}`; return d; };
@@ -188,7 +218,7 @@
       for (const [dx, dl] of drips) y += dl * Math.exp(-Math.pow((x - dx) / 8, 2));
       bot.push([x, y]);
     }
-    L.sauce = layer(svg, 'sauce', closed([...top, ...bot]), '#F39A52');
+    L.sauce = layer(svg, 'sauce', closed([...top, ...bot]), 'url(#sauce)');
     // bacon croustillant: two wavy ribbons
     L.bacon = el('g', { class: 'L bacon' }, svg);
     const ribbon = (x0, x1, yc, ph) => {
@@ -198,15 +228,15 @@
       return [closed([...t, ...b]), fat];
     };
     const [dA, fA] = ribbon(112, 312, 432, 0), [dB, fB] = ribbon(288, 488, 428, 1.6);
-    L.baconA = layer(L.bacon, 'baconA', dA, '#CF5B43', fA);
-    L.baconB = layer(L.bacon, 'baconB', dB, '#CF5B43', fB);
+    L.baconA = layer(L.bacon, 'baconA', dA, 'url(#tx-baconA)', fA);
+    L.baconB = layer(L.bacon, 'baconB', dB, 'url(#tx-baconB)', fB);
     // cornichons
     L.pickles = [];
     [[152, 420], [226, 416], [300, 421], [374, 415], [448, 420]].forEach(([x, y]) => {
       const seeds = `M${x - 10} ${y}l1 0M${x + 2} ${y - 2}l1 0M${x + 12} ${y + 1}l1 0`;
-      L.pickles.push(layer(svg, 'pickle', `M${x - 36} ${y}a36 9 0 1 0 72 0a36 9 0 1 0 -72 0Z`, '#AFC45E', `M${x - 26} ${y}a26 5.5 0 1 0 52 0a26 5.5 0 1 0 -52 0` + seeds));
+      L.pickles.push(layer(svg, 'pickle', `M${x - 36} ${y}a36 9 0 1 0 72 0a36 9 0 1 0 -72 0Z`, 'url(#tx-pickle)', `M${x - 26} ${y}a26 5.5 0 1 0 52 0a26 5.5 0 1 0 -52 0` + seeds));
     });
-    L.bunT = layer(svg, 'bunT', 'M104 416C100 330 180 266 300 262C420 266 500 330 496 416C420 430 180 430 104 416Z', '#F2BE72', 'M168 322C196 294 236 282 268 280');
+    L.bunT = layer(svg, 'bunT', 'M104 416C100 330 180 266 300 262C420 266 500 330 496 416C420 430 180 430 104 416Z', 'url(#tx-bunT)', 'M168 322C196 294 236 282 268 280', 'rgba(255,214,150,.22)');
     // Melty Cheddar nappé sur le dessus
     const ct = [], cb = [];
     for (let x = 124; x <= 476; x += 8) ct.push([x, dome(x) - 5]);
@@ -216,13 +246,13 @@
       for (const [dx, dl] of cd) y += dl * Math.exp(-Math.pow((x - dx) / 9, 2));
       cb.push([x, y]);
     }
-    L.cheese = layer(svg, 'cheese', closed([...ct, ...cb]), '#FFC62E');
+    L.cheese = layer(svg, 'cheese', closed([...ct, ...cb]), 'url(#tx-cheese)');
     // éclats de bacon
     L.bits = [];
     for (let i = 0; i < 20; i++) {
       const x = 150 + rnd() * 300, y = dome(x) + 4 + rnd() * 22, s = 6 + rnd() * 6, a = rnd() * Math.PI;
       const pts = [0, 1, 2, 3].map(k => { const t = a + k * Math.PI / 2 + (rnd() - .5) * .6, r = s * (.6 + rnd() * .5); return [x + Math.cos(t) * r, y + Math.sin(t) * r * .7]; });
-      L.bits.push(layer(svg, 'bit', `M${pts.map(p => p.map(f1).join(' ')).join('L')}Z`, '#B9452F'));
+      L.bits.push(layer(svg, 'bit', `M${pts.map(p => p.map(f1).join(' ')).join('L')}Z`, 'url(#tx-bits)'));
     }
     return L;
   }
@@ -230,12 +260,16 @@
   /* ---------------------------------------------------------------- motion (skipped for reduced motion: the static layout is the page) */
   if (reduce || !window.gsap || !window.ScrollTrigger) { $$('.star').forEach(s => s.classList.add('is-in')); return; }
   gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.addEventListener('refreshInit', sizePanels);
   document.documentElement.classList.add('motion');
 
   const lenis = window.Lenis ? new Lenis({ lerp: .11, smoothWheel: true }) : null;
   if (lenis) {
     window.lenis = lenis;
     lenis.on('scroll', ScrollTrigger.update);
+    // Lenis caches the page height; a ScrollTrigger refresh briefly removes the pins, so re-measure after it
+    // (otherwise Lenis later clamps the scroll to the short page: a deep link to #lieu ended 8600 px early)
+    ScrollTrigger.addEventListener('refresh', () => lenis.resize());
     gsap.ticker.add(t => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
   }
@@ -278,7 +312,8 @@
     const h0 = m ? vh * .39 : vh * .9, k = h0 / 2200, w0 = 1824 * k;
     const cx = m ? vw * .5 : vw * .735, top = m ? vh * .08 : (vh - h0) / 2 + vh * .03;
     veil.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
-    G = { vw, vh, m, k, fs0: { x: cx - w0 / 2 + k * F.x, y: top + k * F.y }, shift: m ? 0 : vw * .2 };
+    const crustH = 1500 * Math.max(vw / 1800, vh / 2400); // the crust area of hero-chicken.webp, at cover size
+    G = { vw, vh, m, k, fs0: { x: cx - w0 / 2 + k * F.x, y: top + k * F.y }, pc: { x: cx - vw / 2, y: top + h0 / 2 - vh / 2 }, k0: Math.max(h0 * 1.05 / crustH, h0 * 1.06 / vh, w0 * 1.06 / vw) };
   }
   function heroAt(p) {
     const z = eio(seg(p, .04, .86)), s = Math.exp(Math.log(S_MAX) * z), c = eio(seg(p, .2, .86));
@@ -288,7 +323,9 @@
     rimG.setAttribute('transform', m);
     rimG.style.opacity = 1 - seg(p, .02, .2);
     rimG.style.visibility = p > .2 ? 'hidden' : '';
-    photo.style.transform = `translate3d(${lerp(G.shift, 0, eio(seg(p, .1, .8)))}px,0,0) scale(${lerp(1.12, 1, eio(seg(p, 0, .9)))})`;
+    // the photo reaches full cover before the hole outgrows it, then keeps pushing in slowly
+    const pz = eio(seg(p, .03, .5));
+    photo.style.transform = `translate3d(${G.pc.x * (1 - pz)}px,${G.pc.y * (1 - pz)}px,0) scale(${lerp(G.k0, 1, pz) * lerp(1, 1.08, seg(p, .5, 1))})`;
     const o = seg(p, 0, .22);
     copy.style.opacity = 1 - o;
     copy.style.translate = `${-60 * eout(o)}px 0`;
@@ -300,7 +337,7 @@
   gsap.from(['.hero-copy .eyebrow', '.hero-sub', '.hero-copy .ctas', '.hero-tags'], { y: 24, opacity: 0, duration: .9, stagger: .07, ease: 'power3.out', delay: .45 });
 
   /* LE SECRET DU MOIS: one progress value drives every layer, so jumps and reversals stay exact */
-  const build = $('.build'), svg = $('.build-svg'), bphoto = $('.build-photo'), steps = $$('.step'), reveal = $('.reveal'), rail = $('.rail'), railB = $$('.rail button'), redact = $('.redact');
+  const flash = $('.flash'), build = $('.build'), svg = $('.build-svg'), bphoto = $('.build-photo'), steps = $$('.step'), reveal = $('.reveal'), rail = $('.rail'), railB = $$('.rail button'), redact = $('.redact');
   const L = drawBurger(svg);
   const UNITS = 9, STARTS = [.15, 1.8, 2.8, 3.8, 4.8, 5.8, 6.8, 7.85];
   const move = (g, y, r = 0, s = 1, ox = 300, oy = 480) => g.setAttribute('transform', `translate(0 ${f1(y)}) rotate(${f1(r)} ${ox} ${oy}) translate(${ox} ${oy}) scale(${s}) translate(${-ox} ${-oy})`);
@@ -321,6 +358,7 @@
     move(L.chk, fy); draw(L.chk, eio(seg(u, 1, 1.4)));
     // 02 pain brioché: bottom rises under, top waits above
     move(L.bunB, 260 * (1 - eout(seg(u, 1.85, 2.35)))); draw(L.bunB, seg(u, 1.85, 2.3));
+    svg.style.setProperty('--contact', seg(u, 2.05, 2.35).toFixed(3));
     const topIn = back(seg(u, 2.1, 2.6)), topLand = eio(seg(u, 5.85, 6.2));
     move(L.bunT, lerp(lerp(-480, -176, topIn), 0, topLand)); draw(L.bunT, seg(u, 2.1, 2.5));
     // 03 sauce Poulet Secret, and the redaction bar
@@ -334,11 +372,12 @@
     move(L.cheese, -14 * (1 - eout(seg(u, 6.15, 6.75)))); draw(L.cheese, eio(seg(u, 6.15, 6.75)));
     L.bits.forEach((g, i) => { const t = seg(u, 6.9 + i * .035, 7.15 + i * .035); move(g, -50 * (1 - eout(t)), 0, back(t) || .001, 300, 300); draw(g, t); });
     // reveal: the drawing turns into the real burger
-    const rv = eio(seg(u, 7.85, 8.45));
-    svg.style.opacity = 1 - rv;
-    svg.style.transform = `scale(${lerp(1, 1.04, rv)})`;
-    bphoto.style.opacity = rv;
-    bphoto.style.transform = `scale(${lerp(.94, 1, rv)})`;
+    const rv = eio(seg(u, 7.85, 8.45)), fl = seg(u, 7.95, 8.45);
+    svg.style.setProperty('--ink', (1 - seg(u, 7.8, 8.02)).toFixed(3));
+    flash.style.opacity = Math.sin(Math.PI * fl).toFixed(3);
+    svg.style.opacity = 1 - seg(u, 8.14, 8.24);
+    bphoto.style.opacity = seg(u, 8.16, 8.26);
+    bphoto.style.transform = `scale(${lerp(1.05, 1, eout(seg(u, 8.16, 8.6)))})`;
     build.style.scale = mobile() ? lerp(1, .66, rv) : '';
     const cur = STARTS.findLastIndex(s => u >= s) + 1;
     steps.forEach((s, i) => { s.classList.toggle('is-on', cur === i + 1); s.classList.toggle('is-past', cur > i + 1); });
@@ -365,7 +404,10 @@
   mmq.add('(min-width: 900px)', () => {
     const track = $('.story .track');
     const dist = () => track.scrollWidth - innerWidth;
-    gsap.to(track, { x: () => -dist(), ease: 'none', scrollTrigger: { trigger: '.story-pin', start: 'top top', end: () => '+=' + dist(), pin: true, scrub: true, invalidateOnRefresh: true } });
+    // a short hold on the story text before the road starts moving, and on the last panel before it leaves
+    gsap.timeline({ scrollTrigger: { trigger: '.story-pin', start: 'top top', end: () => '+=' + dist() * 1.3, pin: true, scrub: true, invalidateOnRefresh: true } })
+      .to(track, { x: () => -dist(), ease: 'power1.inOut', duration: 1 }, .15)
+      .to({}, { duration: .15 });
   });
 
   /* one-shot reveals; ScrollTrigger (not an IntersectionObserver) so a jump past them still fires */

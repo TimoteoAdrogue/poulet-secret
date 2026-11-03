@@ -4,7 +4,7 @@ sys.path.insert(0, sys.path[0])
 from ff import Firefox
 out = sys.argv[1]
 with Firefox(1440, 900) as ff:
-    ff.go('http://127.0.0.1:8765/')
+    ff.go('http://127.0.0.1:8766/')
     time.sleep(2.5)
     print('motion', ff.js("return document.documentElement.className"), 'errors', ff.js("return window.__errs || []"))
     for name, y in (('hero', 0), ('dive', 0.75), ('build', 1.45 + 6.7 * .62), ('reveal', 1.45 + 8.8 * .62)):
