@@ -1,0 +1,6 @@
+review/
+source/*.html
+source/*.pdf
+source/*.png
+tools/__pycache__/
+.DS_Store

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Poulet Secret — redesign audit</title>
+<link rel="icon" href="assets/img/favicon.png" type="image/png">
+<style>
+@font-face { font-family: "Mona Sans"; src: url(assets/fonts/MonaSans-latin.woff2) format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; font-display: swap; }
+:root { --ink: #0E0C0B; --red: #D80123; --paper: #F7F3EE; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font: 400 16px/1.55 "Mona Sans", system-ui, sans-serif; color: var(--ink); background: var(--paper); }
+.wrap { width: min(1120px, 100% - 40px); margin: 0 auto; padding: 64px 0 96px; }
+h1, h2 { font-weight: 900; font-stretch: 75%; text-transform: uppercase; line-height: .9; }
+h1 { font-size: clamp(48px, 8vw, 110px); }
+h1 span { color: var(--red); }
+.lead { max-width: 46em; margin: 22px 0 10px; font-size: 18px; }
+.meta { font-size: 13px; opacity: .7; }
+.meta a, .lead a { color: var(--red); }
+h2 { font-size: clamp(32px, 4vw, 52px); margin: 64px 0 8px; color: var(--red); }
+.flaw { display: grid; grid-template-columns: 56px 1fr; gap: 6px 18px; padding: 22px 0; border-top: 1.5px solid rgba(14,12,11,.16); }
+.flaw .n { font-weight: 900; font-stretch: 75%; font-size: 34px; line-height: 1; color: var(--red); }
+.flaw h3 { font-size: 19px; font-weight: 800; }
+.flaw p, .flaw ol { grid-column: 2; }
+.flaw ol { list-style: none; display: grid; gap: 4px; margin: 6px 0; }
+.flaw li { padding-left: 26px; position: relative; color: rgba(14,12,11,.72); }
+.flaw li::before { content: attr(data-k); position: absolute; left: 0; font-weight: 800; color: rgba(14,12,11,.45); }
+.flaw li.pick { color: var(--ink); font-weight: 600; }
+.flaw li.pick::before { content: "✓"; color: var(--red); }
+.ev { font-size: 14px; color: rgba(14,12,11,.6); }
+.confirm { margin-top: 64px; padding-top: 24px; border-top: 3px solid var(--ink); }
+.confirm li { margin: 8px 0 0 20px; }
+@media (max-width: 640px) { .flaw { grid-template-columns: 1fr; } .flaw p, .flaw ol { grid-column: 1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Poulet Secret <span>audit</span></h1>
+  <p class="lead">I went through <a href="https://pouletsecret.ch/">pouletsecret.ch</a> on 3 November 2026 and listed every flaw I found. Each one has the options I weighed and the one I used (✓) in the <a href="./">redesign</a>. I worked in your priority order: hero first, then motion, then how each section hands over to the next. All text is the client's own, word for word, from their site, their TV menu PDF and their opening-hours story on Linktree. The only change is one typo fix.</p>
+  <p class="meta">Live site: one HTML file of 1.5 MB on Netlify. Real photos used: their 10 (shop, festivals, Cheesy Bacon), logo traced to vector. AI images: none.</p>
+
+  <h2>1 · The hero</h2>
+  <div class="flaw"><span class="n">01</span><h3>Two headlines fight, and there is no H1</h3>
+    <p class="ev">The tagline is set at 32 px in gold neon, right on top of the shop's own lit "FRIED CHICKEN" sign in the photo, so neither one reads. The page has no &lt;h1&gt;.</p>
+    <ol><li data-k="A">Crop the photo so the sign clears the text</li><li data-k="B">Darken the photo and enlarge the tagline</li><li class="pick">Separate them: the photo goes inside the logo, and "The Best fried chicken in Suisse" becomes the H1 at ~8 vw beside it, with "fried" outlined and "chicken" in brand red</li></ol></div>
+  <div class="flaw"><span class="n">02</span><h3>First frame shows neither the brand nor the food</h3>
+    <p class="ev">The hero is a dark night shot, 1600 px wide, stretched edge to edge. The logo is a 38 px icon in the nav.</p>
+    <ol><li data-k="A">Cheesy Bacon photo full-bleed (only 900 px: soft on big screens)</li><li data-k="B">New photo shoot (best, but slow)</li><li class="pick">The red chicken logo becomes a window onto the shop, outlined in red neon like their sign, so brand and place both land in the first second. Food comes one scroll later. Ask the client for the original photo files (B) for launch</li></ol></div>
+  <div class="flaw"><span class="n">03</span><h3>The hero doesn't move and leads nowhere</h3>
+    <p class="ev">The only motion is a looping neon flicker.</p>
+    <ol><li data-k="A">Video background</li><li data-k="B">Parallax photo</li><li class="pick">Scrolling walks you into the shop through the logo: it zooms through the chicken's deepest point, flies past the stencil letters, and the full "FRIED CHICKEN" storefront fills the screen. Then the tray paper slides over it and the next scene starts with no cut</li></ol></div>
+
+  <h2>2 · Motion and transitions</h2>
+  <div class="flaw"><span class="n">04</span><h3>Nothing shows how the food is made</h3>
+    <p class="ev">"Fait maison" is just a label.</p>
+    <ol><li data-k="A">AI video of frying (tried: free plans watermark the output, and AI food fails the "you can tell" test)</li><li data-k="B">Stock footage (not their food)</li><li class="pick">Their Secret du mois gets built step by step as you scroll, drawn in the red line style of their own wrapper paper: 01 poulet frit (into the oil, crust forms, lifted out) · 02 pain brioché · 03 sauce Poulet Secret ("C'est un secret, demande pas", with the words blacked out) · 04 bacon · 05 cornichons · 06 cheddar poured over · 07 bacon bits. Then the drawing turns into their real photo with the price. The steps are their ingredient list, word for word</li></ol></div>
+  <div class="flaw"><span class="n">05</span><h3>Sections are stacked boxes with 1 px borders</h3>
+    <p class="ev">There are no transitions. The only motion is a slider that auto-advances every 4 s.</p>
+    <ol><li data-k="A">Fade-ins on scroll</li><li data-k="B">Generic parallax</li><li class="pick">Every handover borrows a real Poulet Secret object. The tray paper slides over the shop. The checkered liner divides sections. The menu screens switch on like their TVs. The festival photos scroll sideways like a road trip, with the festival names in a ticker that speeds up as you scroll. The shop neon lights only when the shop is open</li></ol></div>
+
+  <h2>3 · What the visitor came for</h2>
+  <div class="flaw"><span class="n">06</span><h3>The main button is dead</h3>
+    <p class="ev">"Commander" appears 3 times and is the primary CTA. On Tue 3 Nov at 16:13 it opened a Lightspeed "page not found", and it isn't on their Linktree either.</p>
+    <ol><li data-k="A">Keep it as is</li><li data-k="B">Delete it</li><li class="pick">One <code>ORDER_URL</code> setting. The buttons stay hidden until a working link is pasted there, and "Le menu" + "Itinéraire" become the primary actions. To confirm with the client</li></ol></div>
+  <div class="flaw"><span class="n">07</span><h3>Opening hours appear nowhere on the site</h3>
+    <p class="ev">They're only in a PDF behind Linktree.</p>
+    <ol><li data-k="A">A table in the footer</li><li class="pick">Live status from their hours (Europe/Zurich time): "Ouvert · jusqu'à 14:00" or "Fermé · ouvre à 18:00", shown in the nav, in the phone dock and as a neon sign that only lights when open. Full table with today marked, also sent to Google as structured data</li></ol></div>
+  <div class="flaw"><span class="n">08</span><h3>The menu shows 4 dishes out of about 35</h3>
+    <p class="ev">The TV menu PDF has wings 3/5/12/24, five burgers, Legends, Kids, sides, five sauces, drinks and the brookie.</p>
+    <ol><li data-k="A">Link the PDF</li><li data-k="B">Embed an image of the board</li><li class="pick">The full menu in HTML, the 8 boards as tabs (keyboard-accessible), plus a "Menu" switch that adds +5.50 / +8.50 exactly where the PDF says. The 3 Stars keep their own section</li></ol></div>
+  <div class="flaw"><span class="n">09</span><h3>Their headline promise is buried</h3>
+    <p class="ev">"GLUTEN FREE FRIED CHICKEN" is the first line of their Linktree bio. On the site it's a "GF" in a stats band.</p>
+    <ol><li class="pick">"Option gluten free" in the hero and on the fried-chicken step</li></ol></div>
+  <div class="flaw"><span class="n">10</span><h3>Copy slips</h3>
+    <p class="ev">"GRENNFIELD FESTIVAL 2026". The Paléo and Albanifest photos aren't in the festival list. "L'an dernier" will go out of date.</p>
+    <ol><li class="pick">Typo fixed (Greenfield), the rest kept verbatim and flagged below</li></ol></div>
+  <div class="flaw"><span class="n">11</span><h3>The contact form only opens a mail app</h3>
+    <p class="ev">It uses <code>mailto:</code>, which does nothing on a phone with no mail app set up.</p>
+    <ol><li data-k="A">Formspree</li><li data-k="B">Netlify Forms (their current host, free tier, one attribute)</li><li class="pick">For this staging copy: keep it and show info@pouletsecret.ch as a big link. On their domain: B</li></ol></div>
+  <div class="flaw"><span class="n">12</span><h3>Staff tools are linked in the public footer</h3>
+    <p class="ev">"Operations Center" and "Finance Center" are shown to every visitor, and both pages answer publicly.</p>
+    <ol><li class="pick">Removed from the public site. Recommend putting them behind a login or an unlinked URL</li></ol></div>
+
+  <h2>4 · Speed, search, sharing</h2>
+  <div class="flaw"><span class="n">13</span><h3>The whole site is one 1.5 MB file</h3>
+    <p class="ev">The 10 photos are inlined as base64 (98% of the bytes) and the logo is embedded twice. Nothing is cached separately and nothing lazy-loads. 1.14 MB transferred before anything shows.</p>
+    <ol><li class="pick">Separate WebP files, lazy below the fold, hero preloaded, logo as vector: about 344 KB gzipped for the first view, and every later visit is cached</li></ol></div>
+  <div class="flaw"><span class="n">14</span><h3>Invisible to Google and to shares</h3>
+    <p class="ev">No meta description, no share image, no favicon, no structured data, and robots.txt returns a 404.</p>
+    <ol><li class="pick">All added: Restaurant schema with address, hours and socials, a share image, icons. This staging copy is set to noindex on purpose</li></ol></div>
+
+  <h2>5 · Phones and accessibility</h2>
+  <div class="flaw"><span class="n">15</span><h3>Phones get no navigation at all</h3>
+    <p class="ev">Below 720 px the nav links disappear and nothing replaces them.</p>
+    <ol><li data-k="A">Hamburger menu</li><li class="pick">A bottom dock within thumb reach: live status, Le menu, Itinéraire</li></ol></div>
+  <div class="flaw"><span class="n">16</span><h3>The slider moves on its own</h3>
+    <p class="ev">It advances every 4 s with no pause, and the slides are background images with no alt text.</p>
+    <ol><li class="pick">You drive the gallery: it scrolls sideways on desktop and swipes on phones, using real images with alt text</li></ol></div>
+  <div class="flaw"><span class="n">17</span><h3>Reduced-motion users</h3>
+    <ol><li class="pick">With reduced motion on, the page drops all scroll effects and shows a complete static layout: the photo, every step, the full menu</li></ol></div>
+
+  <h2>6 · Look</h2>
+  <div class="flaw"><span class="n">18</span><h3>The colours aren't theirs</h3>
+    <p class="ev">The site is brown with gold neon. Their logo, menu screens and packaging are red, white, charcoal and a red/white checker.</p>
+    <ol><li class="pick">Their own colours: fryer black, logo red, charcoal from the menu screens, white tray paper with its checkered liner</li></ol></div>
+  <div class="flaw"><span class="n">19</span><h3>It reads as a template</h3>
+    <p class="ev">Anton + Work Sans + Space Mono labels, centred headings, bordered cards.</p>
+    <ol><li class="pick">Mona Sans Black, condensed (close to their menu-screen lettering), outlined/solid word pairs, no cards: lines and colour fields</li></ol></div>
+
+  <div class="confirm">
+    <h2>To confirm with the client</h2>
+    <ol>
+      <li>Is online ordering still live? If yes, send the working link and every "Commander" button comes back (one setting).</li>
+      <li>Original, full-size photo files, especially the shop at night and the Cheesy Bacon. The site files are compressed to 900–1600 px.</li>
+      <li>"N°1 fried chicken des festivals" and "5 ans": kept as they wrote them. Fine to keep as public claims?</li>
+      <li>"L'an dernier, nous avons ouvert…": give the opening year so the sentence doesn't go out of date.</li>
+      <li>The Secret du mois changes monthly. The drawn build matches the Cheesy Bacon and would be redrawn per edition (or swapped to a Star burger that stays on the menu).</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>
