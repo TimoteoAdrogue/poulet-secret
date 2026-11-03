@@ -31,7 +31,7 @@ ok(await p.evaluate(() => !!document.querySelector('.map iframe')), 'map iframe 
 ok(await p.evaluate(() => document.querySelectorAll('[data-order]:not([hidden])').length === 0), 'no dead Commander button shown');
 // deep link
 p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
-await p.goto(base + '#lieu', { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
+await p.goto(base + '#lieu', { waitUntil: 'load' }); await p.waitForTimeout(2500);
 const t = await near(p, '#lieu'); ok(Math.abs(t) < 4, `deep link #lieu lands at top (${t}px)`);
 // reduced motion: static page, everything readable
 const rm = await (await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })).newPage();
