@@ -43,10 +43,32 @@
   setInterval(paintStatus, 60000);
 
   /* ---------------------------------------------------------------- menu board: tabs + "en menu" prices */
-  const tabs = $$('.tabs [role=tab]');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ease = 'cubic-bezier(.2,.7,.2,1)';
+  const tabs = $$('.tabs [role=tab]'), tabBar = $('.tabs'), pill = $('.tab-pill'), panels = $('.panels');
+  const placePill = t => { pill.style.width = t.offsetWidth + 'px'; pill.style.transform = `translate(${t.offsetLeft}px,${t.offsetTop}px)`; };
+  let swapping = [];
   function selectTab(t, focus) {
-    tabs.forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; $('#' + b.getAttribute('aria-controls')).hidden = !on; });
+    const cur = tabs.find(b => b.getAttribute('aria-selected') === 'true');
     if (focus) t.focus();
+    if (cur === t) return;
+    swapping.forEach(a => a.finish());
+    const from = $('#' + cur.getAttribute('aria-controls')), to = $('#' + t.getAttribute('aria-controls'));
+    tabs.forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
+    placePill(t);
+    tabBar.scrollTo({ left: t.offsetLeft - (tabBar.clientWidth - t.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+    if (reduce) { from.hidden = true; to.hidden = false; return; }
+    // the old board fades out, the box eases to the new height, the new rows come in one after another
+    const out = from.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 150, easing: 'ease-in' });
+    swapping = [out];
+    out.onfinish = () => {
+      const h0 = panels.offsetHeight;
+      from.hidden = true; to.hidden = false;
+      const h1 = panels.offsetHeight;
+      swapping = [panels.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: 420, easing: ease }),
+        ...$$('.bar-title, li, .note, .plus', to).map((el, i) => el.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 460, delay: i * 32, easing: ease, fill: 'backwards' }))];
+    };
   }
   tabs.forEach((t, i) => {
     t.addEventListener('click', () => selectTab(t));
@@ -55,19 +77,35 @@
       if (d) { e.preventDefault(); selectTab(tabs[(i + d + tabs.length) % tabs.length], true); }
     });
   });
+  placePill(tabs[0]);
+  addEventListener('resize', () => placePill(tabs.find(b => b.getAttribute('aria-selected') === 'true')));
+  document.fonts && document.fonts.ready.then(() => placePill(tabs.find(b => b.getAttribute('aria-selected') === 'true')));
+
+  // prices count to their "en menu" value instead of jumping
   const toggle = $('[data-menu-toggle]');
-  function paintPrices() {
+  $$('i[data-p]').forEach(i => { i.innerHTML = '<span class="v"></span><small>en menu</small>'; });
+  function paintPrices(animate) {
+    $('.board').classList.toggle('menu-on', toggle.checked);
     $$('.panel').forEach(p => {
       const plus = toggle.checked ? parseFloat(p.dataset.plus || 0) : 0;
       $$('i[data-p]', p).forEach(i => {
-        const v = parseFloat(i.dataset.p) + plus;
-        i.innerHTML = `CHF ${v.toFixed(2)}` + (plus ? '<small>en menu</small>' : '');
+        const to = parseFloat(i.dataset.p) + plus, from = i._v ?? to, v = $('.v', i), tok = {};
+        i._v = to; i._tok = tok;
         i.classList.toggle('is-menu', !!plus);
+        if (!animate || reduce || from === to) { v.textContent = `CHF ${to.toFixed(2)}`; return; }
+        const t0 = performance.now();
+        const step = now => {
+          if (i._tok !== tok) return;
+          const k = Math.min(1, (now - t0) / 560), e = 1 - Math.pow(1 - k, 3);
+          v.textContent = `CHF ${(from + (to - from) * e).toFixed(2)}`;
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
       });
     });
   }
-  toggle.addEventListener('change', paintPrices);
-  paintPrices();
+  toggle.addEventListener('change', () => paintPrices(true));
+  paintPrices(false);
 
   /* ---------------------------------------------------------------- map loads only when it is close */
   const map = $('[data-map]');
@@ -76,19 +114,12 @@
     o.disconnect();
     const f = document.createElement('iframe');
     f.src = map.dataset.map; f.title = 'Poulet Secret — Grand-Rue 8, Neuchâtel'; f.loading = 'lazy'; f.referrerPolicy = 'no-referrer-when-downgrade';
+    f.addEventListener('load', () => f.classList.add('is-loaded'));
     map.append(f);
   }, { rootMargin: '600px' }).observe(map);
 
-  /* ---------------------------------------------------------------- one-shot reveals */
-  const once = (els, cls, opts) => {
-    const io = new IntersectionObserver(es => es.forEach(e => {
-      if (e.isIntersecting || e.boundingClientRect.top < 0) { e.target.classList.add(cls); io.unobserve(e.target); }
-    }), opts);
-    els.forEach(el => io.observe(el));
-  };
-  once($$('.star'), 'is-in', { threshold: .35 });
-  once($$('.tv'), 'on', { threshold: .25 });
-  once($$('[data-neon]'), 'flick', { threshold: .6 });
+  // photos fade in as they arrive instead of popping
+  $$('.shot img').forEach(img => { const done = () => img.classList.add('is-loaded'); img.complete ? done() : (img.addEventListener('load', done), img.addEventListener('error', done)); });
 
   /* ---------------------------------------------------------------- the drawing: built from code, red ink over riso fills */
   const NS = 'http://www.w3.org/2000/svg';
@@ -197,8 +228,7 @@
   }
 
   /* ---------------------------------------------------------------- motion (skipped for reduced motion: the static layout is the page) */
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce || !window.gsap || !window.ScrollTrigger) return;
+  if (reduce || !window.gsap || !window.ScrollTrigger) { $$('.star').forEach(s => s.classList.add('is-in')); return; }
   gsap.registerPlugin(ScrollTrigger);
   document.documentElement.classList.add('motion');
 
@@ -209,19 +239,39 @@
     gsap.ticker.add(t => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
   }
-  const goTo = y => lenis ? lenis.scrollTo(y, { duration: 1.2 }) : window.scrollTo({ top: y, behavior: 'smooth' });
+  // short moves glide, with a duration that follows the distance; long ones pass behind a red curtain,
+  // so a click never fast-forwards through 6000 px of pinned animation
+  const curtain = $('.curtain');
+  const nowY = () => lenis ? lenis.scroll : scrollY;
+  let holdBar = 0; // the bar stays put during a scroll the visitor asked for
+  const glide = y => {
+    const d = clamp(Math.abs(y - nowY()) / 1600, .6, 1.8);
+    holdBar = performance.now() + d * 1000 + 300;
+    lenis ? lenis.scrollTo(y, { duration: d, easing: eio }) : window.scrollTo({ top: y, behavior: 'smooth' });
+  };
+  function jump(t) {
+    const y = t === document.body ? 0 : t.getBoundingClientRect().top + nowY();
+    if (Math.abs(y - nowY()) < innerHeight * 1.8) return glide(y);
+    holdBar = performance.now() + 1600;
+    gsap.timeline()
+      .fromTo(curtain, { clipPath: 'inset(100% 0 0% 0)' }, { clipPath: 'inset(0% 0 0% 0)', duration: .5, ease: 'power3.inOut' })
+      .fromTo(curtain.firstChild, { scale: .8, opacity: 0 }, { scale: 1, opacity: 1, duration: .45, ease: 'power3.out' }, .15)
+      .add(() => { lenis ? lenis.scrollTo(y, { immediate: true, force: true }) : scrollTo(0, y); ScrollTrigger.update(); })
+      .to(curtain, { clipPath: 'inset(0% 0 100% 0)', duration: .6, ease: 'power3.inOut' }, '+=.12')
+      .to(curtain.firstChild, { scale: 1.1, opacity: 0, duration: .35, ease: 'power2.in' }, '<');
+  }
   $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
     const t = a.getAttribute('href') === '#top' ? document.body : $(a.getAttribute('href'));
     if (!t) return;
     e.preventDefault();
-    if (lenis) lenis.scrollTo(t, { duration: 1.4 }); else t.scrollIntoView({ behavior: 'smooth' });
+    jump(t);
   }));
 
   const mobile = () => innerWidth < 900;
 
-  /* HERO: zoom through the chicken's neck (its deepest point, tools/pole.py) until the shop fills the screen */
+  /* HERO: zoom through the chicken's body (its deepest point, tools/pole.py) until the shop fills the screen */
   const veil = $('.hero-veil'), holeG = $('.hole-g'), rimG = $('.rim-g'), photo = $('.hero-photo'), copy = $('.hero-copy'), making = $('.making'), cue = $('.scroll-cue');
-  const F = { x: 1388, y: 490 }, S_MAX = 24;
+  const F = { x: 846, y: 1186 }, S_MAX = 12;
   let G = {};
   function heroGeo() {
     const vw = innerWidth, vh = innerHeight, m = mobile();
@@ -291,7 +341,7 @@
     bphoto.style.transform = `scale(${lerp(.94, 1, rv)})`;
     build.style.scale = mobile() ? lerp(1, .66, rv) : '';
     const cur = STARTS.findLastIndex(s => u >= s) + 1;
-    steps.forEach((s, i) => s.classList.toggle('is-on', cur === i + 1));
+    steps.forEach((s, i) => { s.classList.toggle('is-on', cur === i + 1); s.classList.toggle('is-past', cur > i + 1); });
     reveal.classList.toggle('is-on', cur === 8);
     railB.forEach((b, i) => b.classList.toggle('is-on', cur === i + 1));
     rail.classList.toggle('is-off', cur === 8);
@@ -308,7 +358,7 @@
   const intro = ScrollTrigger.create({ trigger: '.intro', start: 'top top', end: `+=${TOTAL * 100}%`, pin: '.intro-pin', scrub: true,
     onUpdate: s => introAt(s.progress * TOTAL), onRefresh: s => { heroGeo(); introAt(s.progress * TOTAL); } });
   const MIDS = [1.2, 2.4, 3.45, 4.5, 5.45, 6.55, 7.45];
-  railB.forEach((b, i) => b.addEventListener('click', () => goTo(intro.start + (BUILD + MIDS[i] * UNIT) / TOTAL * (intro.end - intro.start))));
+  railB.forEach((b, i) => b.addEventListener('click', () => glide(intro.start + (BUILD + MIDS[i] * UNIT) / TOTAL * (intro.end - intro.start))));
 
   /* STORY: the festival road scrolls sideways on wide screens */
   const mmq = gsap.matchMedia();
@@ -317,6 +367,28 @@
     const dist = () => track.scrollWidth - innerWidth;
     gsap.to(track, { x: () => -dist(), ease: 'none', scrollTrigger: { trigger: '.story-pin', start: 'top top', end: () => '+=' + dist(), pin: true, scrub: true, invalidateOnRefresh: true } });
   });
+
+  /* one-shot reveals; ScrollTrigger (not an IntersectionObserver) so a jump past them still fires */
+  $$('.star').forEach(s => ScrollTrigger.create({ trigger: s, start: 'top 80%', once: true, onEnter: () => s.classList.add('is-in') }));
+  ScrollTrigger.create({ trigger: '[data-neon]', start: 'top 70%', once: true, onEnter: () => $('[data-neon]').classList.add('flick') });
+
+  /* MENU BOARD: the screen lights up line by line as it scrolls in */
+  const tvIn = $('.tv-inner');
+  ScrollTrigger.create({ trigger: tvIn, start: 'top 92%', end: 'top 12%', scrub: true, onUpdate: s => {
+    tvIn.style.setProperty('--scan', s.progress.toFixed(4));
+    tvIn.style.setProperty('--beam', s.progress > .001 && s.progress < .999 ? 1 : 0);
+  }, onRefresh: s => tvIn.style.setProperty('--scan', s.progress.toFixed(4)) });
+
+  /* HANDOVERS: while a section comes in, the one it covers lags behind and dims (CSS reads --ho) */
+  [['.making', '.stars'], ['.stars', '.board'], ['.board', '.story'], ['.story', '.visit'], ['.visit', '.contact'], ['.contact', '.foot']].forEach(([a, b]) => {
+    const out = $(a);
+    ScrollTrigger.create({ trigger: b, start: 'top bottom', end: 'top top', scrub: true,
+      onUpdate: s => out.style.setProperty('--ho', eio(s.progress).toFixed(4)), onLeaveBack: () => out.style.setProperty('--ho', 0) });
+  });
+
+  /* each block rises in with the scroll (scrubbed, so a jump or a reversal always shows the right state) */
+  $$('[data-rise]').forEach(el => gsap.fromTo(el, { y: 70, opacity: 0 }, { y: 0, opacity: 1, ease: 'power2.out',
+    scrollTrigger: { trigger: el, start: 'top 97%', end: 'top 64%', scrub: true } }));
 
   /* festival names marquee, faster with scroll speed */
   const row = $('.marquee-row');
@@ -336,7 +408,8 @@
   addEventListener('scroll', () => {
     const y = scrollY, past = y > innerHeight * 1.4;
     bar.classList.toggle('is-solid', past);
-    bar.classList.toggle('is-away', past && y > lastY + 2 && !mobile());
+    if (performance.now() > holdBar) bar.classList.toggle('is-away', past && y > lastY + 2 && !mobile());
+    else bar.classList.remove('is-away');
     dock.classList.toggle('is-on', past);
     lastY = y;
   }, { passive: true });

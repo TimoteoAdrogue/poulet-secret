@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/MonaSans-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/img/p00.webp" as="image">
-<link rel="stylesheet" href="assets/styles.css?v=1">
+<link rel="stylesheet" href="assets/styles.css?v=2">
 <script>document.documentElement.classList.add('js'); window.__errs = []; addEventListener('error', e => window.__errs.push(String(e.message)));</script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Restaurant","name":"Poulet Secret","servesCuisine":"Fried chicken","priceRange":"CHF","image":"https://timoteoadrogue.github.io/poulet-secret/assets/img/og.jpg",
@@ -127,23 +127,23 @@
 <section class="stars" id="stars" aria-labelledby="stars-title">
   <div class="checker" aria-hidden="true"></div>
   <div class="wrap">
-    <div class="stars-head">
+    <div class="stars-head" data-rise>
       <p class="eyebrow">Nos favoris</p>
       <h2 id="stars-title" class="big">Poulet Secret Stars</h2>
       <p>Les trois incontournables — servis en menu complet.</p>
     </div>
     <ul class="star-list">
-      <li class="star">
+      <li class="star" data-rise>
         <svg class="star-ico" viewBox="0 0 120 120" aria-hidden="true"><path pathLength="1" d="M18 62c0-24 19-40 42-40s42 16 42 40Z M16 70h88 M18 80c10 6 20-4 30 2s20-4 30 2 18-2 24 0 M20 90h80c0 10-8 16-18 16H38c-10 0-18-6-18-16Z M40 40l2 2 M60 34l2 2 M78 42l2 2"/></svg>
         <div class="star-main"><p class="badge">★ Spicy</p><h3>Burger Spicy</h3><p class="desc">Pain brioché, sauce spicy Poulet Secret, piments rouges, melty cheddar, poulet frit, salade iceberg.</p></div>
         <div class="star-price"><p class="p">15.50<small> CHF</small></p><p class="alt">ou 21 CHF en menu</p><p class="inc">Menu +5.50 CHF : boisson (thé maison), frites, sauce.</p></div>
       </li>
-      <li class="star">
+      <li class="star" data-rise>
         <svg class="star-ico" viewBox="0 0 120 120" aria-hidden="true"><path pathLength="1" d="M22 30l38 78 38-78Z M30 30c2-10 12-12 16-6 4-10 18-10 20 0 6-8 18-4 18 6 M40 50c6 2 10-2 14 2 M58 64c6 0 8-4 12 0 M48 80c4 2 8 0 10 2"/></svg>
         <div class="star-main"><p class="badge">★ Legends</p><h3>Bites</h3><p class="aside">(sounds better in English 😏)</p><p class="desc">250 g de poulet frit maison, coupé en bouchées, sauce au choix.</p></div>
         <div class="star-price"><p class="p">16.50<small> CHF</small></p><p class="alt">ou 22 CHF en menu</p><p class="inc">Menu +5.50 CHF : boisson (thé maison), frites, sauce.</p></div>
       </li>
-      <li class="star">
+      <li class="star" data-rise>
         <svg class="star-ico" viewBox="0 0 120 120" aria-hidden="true"><path pathLength="1" d="M20 44c6-14 22-14 30-6 10-10 26-6 28 6-6 10-20 14-30 8-10 8-24 4-28-8Z M44 70c6-14 22-14 30-6 10-10 26-6 28 6-6 10-20 14-30 8-10 8-24 4-28-8Z M16 96h88"/></svg>
         <div class="star-main"><p class="badge">★ Secret Tenders</p><h3>Tenders</h3><p class="desc">250 g de poulet frit maison, sauce au choix.</p></div>
         <div class="star-price"><p class="p">14.00<small> CHF</small></p><p class="alt">ou 22.50 CHF en menu</p><p class="inc">Menu +8.50 CHF : boisson (thé maison), cole slaw, pain maison, frites, sauce.</p></div>
@@ -156,11 +156,12 @@
 <section class="board" id="menu" aria-labelledby="menu-title">
   <div class="tv">
     <div class="tv-inner">
-      <div class="board-head">
+      <div class="board-head" data-rise>
         <h2 id="menu-title" class="big">Le menu</h2>
         <label class="switch"><input type="checkbox" data-menu-toggle><span class="knob" aria-hidden="true"></span><span>Menu</span></label>
       </div>
       <div class="tabs" role="tablist" aria-label="Catégories">
+        <span class="tab-pill" aria-hidden="true"></span>
         <button role="tab" id="t-chicken" aria-controls="c-chicken" aria-selected="true">Fried chicken</button>
         <button role="tab" id="t-burgers" aria-controls="c-burgers" aria-selected="false" tabindex="-1">Burgers</button>
         <button role="tab" id="t-legends" aria-controls="c-legends" aria-selected="false" tabindex="-1">Legends</button>
@@ -171,6 +172,7 @@
         <button role="tab" id="t-desserts" aria-controls="c-desserts" aria-selected="false" tabindex="-1">Desserts</button>
       </div>
 
+      <div class="panels">
       <div class="panel" role="tabpanel" id="c-chicken" aria-labelledby="t-chicken" data-plus="8.5">
         <h3 class="bar-title">Crispy wings</h3>
         <ul class="items">
@@ -243,6 +245,7 @@
       <div class="panel" role="tabpanel" id="c-desserts" aria-labelledby="t-desserts" hidden>
         <ul class="items"><li><b>Brookie</b><span>Brownie avec Cookie</span><i data-p="5.00"></i></li></ul>
       </div>
+      </div>
     </div>
   </div>
 </section>
@@ -251,7 +254,7 @@
 <section class="story" id="histoire" aria-labelledby="story-title">
   <div class="story-pin">
     <div class="track">
-      <div class="panel-text">
+      <div class="panel-text" data-rise>
         <p class="eyebrow">L'histoire</p>
         <h2 id="story-title" class="big">Du stand de festival au centre de Neuchâtel</h2>
         <p>Poulet Secret a grandi dans les <b>festivals suisses</b>, où il s'est vite imposé comme la référence du fried chicken. <b>Festineuch</b>, l'un des plus grands festivals de Neuchâtel, a été parmi les premiers à nous ouvrir ses portes.</p>
@@ -281,7 +284,7 @@
 <section class="visit" id="lieu" aria-labelledby="visit-title">
   <img class="visit-photo" src="assets/img/p00.webp" alt="" width="1600" height="1430" loading="lazy">
   <div class="wrap visit-grid">
-    <div class="neon-col">
+    <div class="neon-col" data-rise>
       <p class="eyebrow">Où nous trouver</p>
       <h2 id="visit-title" class="big">Au centre de Neuchâtel</h2>
       <p class="neon" data-neon aria-live="polite"><span class="neon-word">Ouvert</span><span class="neon-sub"></span></p>
@@ -293,7 +296,7 @@
         <div data-days="0"><dt>Dimanche</dt><dd>11:30 - 21:30</dd></div>
       </dl>
     </div>
-    <div class="place-col">
+    <div class="place-col" data-rise>
       <dl class="place">
         <div><dt>Adresse</dt><dd>Grand-Rue 8, 2000 Neuchâtel</dd></div>
         <div><dt>Accès</dt><dd>En plein centre-ville, à deux pas de la place Pury</dd></div>
@@ -309,13 +312,13 @@
 <section class="contact" id="contact" aria-labelledby="contact-title">
   <div class="checker" aria-hidden="true"></div>
   <div class="wrap contact-grid">
-    <div>
+    <div data-rise>
       <p class="eyebrow">Nous contacter</p>
       <h2 id="contact-title" class="big">Une question, un événement ?</h2>
       <p>Écrivez-nous et on vous répond rapidement.</p>
       <p class="mail"><a href="mailto:info@pouletsecret.ch">info@pouletsecret.ch</a></p>
     </div>
-    <form class="form" action="mailto:info@pouletsecret.ch" method="post" enctype="text/plain">
+    <form data-rise class="form" action="mailto:info@pouletsecret.ch" method="post" enctype="text/plain">
       <label>Nom<input name="name" type="text" placeholder="Votre nom" autocomplete="name" required></label>
       <label>E-mail<input name="email" type="email" placeholder="vous@exemple.ch" autocomplete="email" required></label>
       <label>Message<textarea name="message" rows="4" placeholder="Votre message"></textarea></label>
@@ -328,7 +331,7 @@
 </main>
 
 <footer class="foot">
-  <p class="foot-word" aria-hidden="true">Poulet <span>Secret</span></p>
+  <p class="foot-word" data-rise aria-hidden="true">Poulet <span>Secret</span></p>
   <div class="wrap foot-row">
     <a class="foot-logo" href="#top"><img src="assets/img/logo-red.png" alt="" width="912" height="1100">Poulet Secret</a>
     <nav class="foot-links" aria-label="Pied de page">
@@ -348,9 +351,11 @@
   <a href="https://maps.app.goo.gl/cTDcNf3a1ir9ze2u6" target="_blank" rel="noopener">Itinéraire</a>
 </nav>
 
+<div class="curtain" aria-hidden="true"><svg viewBox="0 0 1824 2200"><use href="#chk"/></svg></div>
+
 <script src="assets/vendor/gsap.min.js" defer></script>
 <script src="assets/vendor/ScrollTrigger.min.js" defer></script>
 <script src="assets/vendor/lenis.min.js" defer></script>
-<script src="assets/main.js?v=1" defer></script>
+<script src="assets/main.js?v=2" defer></script>
 </body>
 </html>
